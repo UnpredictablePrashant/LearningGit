@@ -176,3 +176,121 @@ A memory map for the Git command which I use from time to time. These are most u
 38. `git archive`<br>
     Use Case: Creates an archive (such as a tar or zip file) of files from a named tree (commit, branch, or tag).<br>
     Example: `git archive --format=zip HEAD > project.zip`<br><br>
+
+
+## Case Study
+
+### 1. Go back to working commit
+Let's say you have pushed a piece of code but realizes that it was a huge mistake. And now you want to go back to your previous commit and discard all the changes that you did. <br>
+This generates two scenario, do we want to keep a record of changes that we made or do we not want to keep a record of the changes. <br><br>
+Let's say we want to safely undo changes without rewriting history:<br><br>
+a. Let's identify the commit id which you want to revert to.
+```
+git log
+```
+b. Then let's revert safely to the commit.
+```
+git revert <commit-id>
+```
+c. Finally push the changes:
+```
+git push origin <branch-name>
+```
+<br>
+Now let's say we don't want to keep any record and go back to the specific commit id.<br><br>
+a. Let's identify the commit id which you want to revert to.
+
+```
+git log
+```
+b. Reset to the commit.
+```
+git reset --hard <commit-id>
+```
+c. Finally push tha changes
+```
+git push --force origin <branch-name>
+```
+<br><br>
+
+
+
+### 2. Rebasing the branch
+
+You are working on a feature branch `feature-xyz` while other developers are also making changes on the `main` branch. Your goal is to integrate your changes from `feature-xyz` into the `main` branch in a clean, linear history. Instead of merging main into your feature branch and then merging the feature branch back into `main`, you decide to use rebase to make the history more readable.<br><br>
+Let's checkout the `feature-xyz` branch and make some changes to it and commit those changes.<br>
+```
+git checkout feature-xyz
+```
+Made some changes in the and did the commit. But realized that there had been changes in the `main` branch by other developers. So let's go ahead and rebase it.
+
+```
+git fetch origin
+git checkout main
+git pull origin main
+git checkout feature-xyz
+git rebase main
+```
+Now at this point if you have some conflicting commits. The resolve it manually and then continue with the following command.
+```
+git add <resolved-file>
+git rebase --continue
+```
+Finally push the changes once when all the conflicts has been pushed.
+```
+git push --force origin feature-xyz
+```
+
+Note: One can also use `merge` in this scenario but you would like to use `rebase` when you want to want to keep the history of the commits in linear manner.<br><br>
+
+### 3. Cherry Picking the changes
+You are working on a feature branch (`feature-A`) and realize that one specific commit from another branch (`feature-B`) contains a critical bug fix that you need in your current branch. Instead of merging the entire `feature-B` branch, you decide to cherry-pick just the necessary commit to apply the fix to your `feature-A` branch.<br><br>
+a. Let's say you made some changes and committed on the `feature-A` branch (also you can push here) and realized that there had been some bug fixes in the `feature-B` branch which you want to cherry-pick.
+```
+git fetch origin feature-B
+git checkout feature-B
+git pull
+git checkout feature-A
+git log feature-B
+```
+Here you can note the commit-id from `feature-B` which has the bug fix and then go ahead and apply them.
+```
+git cherry-pick <commit-id>
+```
+If there are any conflicts, then resolve it.
+```
+git add <resolved-file>
+git cherry-pick --continue
+```
+Once all the fixes has been done then go ahead commit them and push them.
+```
+git push origin feature-A
+```
+<br>
+
+### 4. Effective Git Branching and Merging
+You are part of a development team working on a project with a standard Git workflow. Your team uses feature branches to develop new features and fixes, which are eventually merged into the main branch. You will demonstrate how to create and manage branches, as well as merge them back into the main branch effectively. <br><br>
+
+a. Let's say you want to go to `feature-A` branch and make some changes and commit those changes.
+```
+git checkout origin feature-A
+echo 'hello' > index.html
+git add index.html
+git commit -m "WIP: working on index"
+git push origin feature-A
+```
+b. At this point you realized there are some updates on the `main` branch and you want to keep your current `feature-A` branch up to date.
+```
+git pull origin main
+```
+If there are any conflicts, then resolve it manually and then add them and commit them.
+```
+git add <resolved-file>
+git commit -m "FIX: resolved commits"
+```
+c. Continue working on your `feature-A` branch until your work is done and then finally commit all the changes. Once your work with the feature is done, we will merge this with the `main` branch.
+```
+git checkout main
+git merge feature-A
+git push origin main
+```
